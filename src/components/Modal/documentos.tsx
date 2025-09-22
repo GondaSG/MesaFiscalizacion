@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Calendar } from 'lucide-react';
 import Convocatoria from './convocatoria';
-import TipoFiscalizacion from './Tipofiscalizacion';
+import TipoFiscalizacion from './TipoFiscalizacion';
 interface DocumentosModalProps {
     isModelOpen: boolean;
     item: any;
