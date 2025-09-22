@@ -1,0 +1,229 @@
+/* Estilos personalizados para la aplicación */
+
+/* Contenedor de login */
+.login-container {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  min-height: 100vh;
+}
+
+/* Dashboard */
+.dashboard-container {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Header personalizado */
+.navbar-brand {
+  font-size: 1.5rem;
+}
+
+/* Sidebar */
+.sidebar-container {
+  min-height: calc(100vh - 56px);
+  max-width: 280px;
+  width: 280px;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.sidebar-container.collapsed {
+  max-width: 70px;
+  width: 70px;
+}
+
+.sidebar-content {
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+
+.sidebar-container .list-group-item {
+  border: none;
+  padding: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-container.collapsed .list-group-item {
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.sidebar-container .list-group-item:hover {
+  background-color: #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.sidebar-container .list-group-item.active {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+.sidebar-container .list-group-item.active:hover {
+  background-color: #0056b3 !important;
+}
+
+/* Contenido principal */
+.main-content {
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 56px);
+  transition: all 0.3s ease;
+}
+
+.main-content.expanded {
+  margin-left: -210px;
+}
+
+/* Cards del dashboard */
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Dropdown personalizado */
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Timeline */
+.timeline-item {
+  position: relative;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 30px;
+  width: 2px;
+  height: calc(100% - 10px);
+  background-color: #dee2e6;
+}
+
+.timeline-item:last-child::before {
+  display: none;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Breadcrumb personalizado */
+.breadcrumb {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: ">";
+  color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar-container {
+    position: fixed;
+    left: -280px;
+    z-index: 1000;
+    height: 100vh;
+    top: 56px;
+  }
+  
+  .sidebar-container.show {
+    left: 0;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+  
+  .login-container .row {
+    flex-direction: column-reverse;
+  }
+  
+  .login-container .col-md-6:first-child {
+    padding: 2rem 1rem;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Colores personalizados */
+:root {
+  --bs-primary: #007bff;
+  --bs-primary-dark: #0056b3;
+}
+
+/* Textos */
+.text-dark {
+  color: #212529 !important;
+}
+
+/* Tabla */
+.table {
+  color: #212529;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Botones */
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* Estados de carga */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Alertas */
+.alert {
+  border: none;
+  border-radius: 8px;
+}
