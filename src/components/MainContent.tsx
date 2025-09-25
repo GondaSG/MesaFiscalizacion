@@ -2,7 +2,7 @@ import React from 'react';
 import BandejaIngresantes from './Tables/bandeja-ingresantes';
 import BandejaLegajos from './Tables/bandeja-legajos';
 import BandejaDocumentos from './Tables/bandeja-documentos';
-
+import DashboardContent from './DashboardContent';
 interface MainContentProps {
   selectedMenuItem: string;
 }
@@ -22,6 +22,11 @@ const MainContent: React.FC<MainContentProps> = ({ selectedMenuItem }) => {
   if (selectedMenuItem === 'bandeja-documentos') {
     return (
       <BandejaDocumentos selectedMenuItem={getPageTitle(selectedMenuItem)} />
+    )
+  }
+  if (selectedMenuItem === 'dashboard') {
+    return (
+      <DashboardContent selectedMenuItem={getPageTitle(selectedMenuItem)} />
     )
   }
 

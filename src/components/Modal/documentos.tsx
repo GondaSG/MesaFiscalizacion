@@ -106,13 +106,11 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({ isModelOpen, item, on
 
     const selectedTipoFiscalizacion = (tipo: string) => {
         const updatedDocumentos = [...documentos];
-        console.log(tipo);
         updatedDocumentos.forEach((doc, index) => {
             if (index == rowSelected?.id) {
                 doc.verificacion = tipo;
             }
         });
-        console.log(updatedDocumentos);
         setDocumentos(updatedDocumentos);
     }
     const handleRowClick = (row: DocumentoProps) => {
