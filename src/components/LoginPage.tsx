@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { login } from '../api/authApi';
 
 interface LoginPageProps {
   onLogin: (userData: any) => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const  LoginPage: React.FC<LoginPageProps> =  ({ onLogin }) => {
   const [formData, setFormData] = useState({
     user: '',
     password: ''
@@ -12,23 +13,25 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     // Simulación de autenticación
-    setTimeout(() => {
+    setTimeout(async() => {
       if (formData.user && formData.password) {
-        onLogin({
-          name: 'Usuario Demo',
-          user: formData.user,
-          role: 'Administrador'
-        });
+        const obj = await login(formData.user, formData.password);
+        if (obj.isLogin) {
+          onLogin({ user: formData.user,role: 'ADMIN' });
+        }else{
+          setError(obj.mensaje);
+        }
       } else {
         setError('Por favor, complete todos los campos');
       }
       setIsLoading(false);
+
     }, 1000);
   };
 
@@ -59,7 +62,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   <h3 className="text-primary">Iniciar Sesión</h3>
                   <p className="text-muted">Ingresa tus credenciales para continuar</p>
                 </div>
-                
+
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label htmlFor="user" className="form-label text-dark">
@@ -76,7 +79,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       required
                     />
                   </div>
-                  
+
                   <div className="mb-4">
                     <label htmlFor="password" className="form-label text-dark">
                       <i className="bi bi-lock me-2"></i>Contraseña

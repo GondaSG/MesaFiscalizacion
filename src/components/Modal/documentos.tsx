@@ -1,123 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { X, Calendar } from 'lucide-react';
 import Convocatoria from './convocatoria';
 import TipoFiscalizacion from './TipoFiscalizacion';
+import {TipoVerificacion} from '../../Interfaces/TipoVerificacion';
 interface DocumentosModalProps {
-    isModelOpen: boolean;
+    data: DocumentoProps[];
     item: any;
     onClose: () => void;
+    selectedRows: string[];
+    onSelectRow: (id: string) => void;
+    selectedTipoFiscalizacion: (value: TipoVerificacion) => void;
 }
 interface DocumentoProps {
-    id: number  | undefined;
-    requisito: string;
-    tipo: string;
-    descripcion: string;
+    id: string ;
+    requisitoFiscalizado: string;
+    tipoDocumentofoleo: string;
+    descripcionDocumento: string;
     emisor: string;
-    sector: string;
-    verificacion: string | null;
+    sectorEmpresaEmisora: string;
+    tipoVerificacion: string | null;
+    tipoVerificacionId: string | null;
+    subTipoVerificacion: string | null;
+    subTipoVerificacionId: string | null;
     fechaPresentacion: string;
     fechaFiscalizacion: string;
 }
-const DocumentosModal: React.FC<DocumentosModalProps> = ({ isModelOpen, item, onClose }) => {
+interface DocumentosSave {
+    id: string;
+    tipoVerificacion: string;
+    subTipoVerificacion: string;
+}
+const DocumentosModal: React.FC<DocumentosModalProps> = ({data,item, onClose, selectedRows ,onSelectRow,selectedTipoFiscalizacion}) => {
 
     const [modalReingresante, setModalReingresante] = useState('si');
     const [modalVerTodosDocumentos, setModalVerTodosDocumentos] = useState(true);
     const [isConvocatoriaOpen, setIsConvocatoriaOpen] = useState(false);
     const [isTipoFiscalizacionOpen, setIsTipoFiscalizacionOpen] = useState(false);
     const [rowSelected, setRowSelected] = useState<DocumentoProps>();
+    const [documentos, setDocumentos] = useState<DocumentoProps[]>([]);
 
-    const [documentos, setDocumentos] = useState([{
-        id: 1,
-        requisito: 'Capacitación',
-        tipo: 'Diploma',
-        descripcion: 'Grado de Bachiller',
-        emisor: 'Universidad de Piura',
-        sector: 'PRIVADO',
-        verificacion: 'WEB',
-        fechaPresentacion: '15/06/2025',
-        fechaFiscalizacion: ''
-    },
-    {
-        id: 2,
-        requisito: 'Capacitación',
-        tipo: 'Certificado',
-        descripcion: 'Curso de Administración',
-        emisor: 'ISIL',
-        sector: 'PRIVADO',
-        verificacion: 'SGD',
-        fechaPresentacion: '15/06/2025',
-        fechaFiscalizacion: ''
-    },
-    {
 
-        requisito: 'Capacitación',
-        tipo: 'Constancia',
-        descripcion: 'Curso Power BI',
-        emisor: 'Universidad Ricardo Palma',
-        sector: 'PRIVADO',
-        verificacion: 'SGD',
-        fechaPresentacion: '15/06/2025',
-        fechaFiscalizacion: ''
-    },
-    {
-        id: 3,
-        requisito: 'Experiencia Laboral',
-        tipo: 'Constancia',
-        descripcion: 'Constancia de trabajo',
-        emisor: 'Ministerio de Vivienda Construcción y Saneamiento',
-        sector: 'PÚBLICO',
-        verificacion: null,
-        fechaPresentacion: '16/06/2025',
-        fechaFiscalizacion: ''
-    },
-    {
-        id: 4,
-        requisito: 'Experiencia Laboral',
-        tipo: 'Certificado',
-        descripcion: 'Certificado de trabajo',
-        emisor: 'Agile Quality Ingeniería',
-        sector: 'PRIVADO',
-        verificacion: null,
-        fechaPresentacion: '16/06/2025',
-        fechaFiscalizacion: ''
-    },
-    {
-        id: 5,
-        requisito: 'Experiencia Laboral',
-        tipo: 'Constancia',
-        descripcion: 'Constancia de Prestación de Servicio (CAS)',
-        emisor: 'Ministerio de Cultura',
-        sector: 'PÚBLICO',
-        verificacion: null,
-        fechaPresentacion: '16/06/2025',
-        fechaFiscalizacion: ''
-    },
-    {
-        id: 6,
-        requisito: 'Experiencia Laboral',
-        tipo: 'Certificado de trabajo',
-        descripcion: 'Certificado de trabajo',
-        emisor: 'GEOSUELOS SAC',
-        sector: 'PRIVADO',
-        verificacion: 'SGD',
-        fechaPresentacion: '16/06/2021',
-        fechaFiscalizacion: ''
-    }]);
-
-    const selectedTipoFiscalizacion = (tipo: string) => {
-        const updatedDocumentos = [...documentos];
-        updatedDocumentos.forEach((doc, index) => {
-            if (index == rowSelected?.id) {
-                doc.verificacion = tipo;
-            }
-        });
-        setDocumentos(updatedDocumentos);
-    }
     const handleRowClick = (row: DocumentoProps) => {
         setIsTipoFiscalizacionOpen(true);
         setRowSelected(row)
     }
-    if (!isModelOpen) return null;
+
+
+
+    const handleGuardar = ()=>{
+        console.log(selectedRows)
+        console.log(data)
+    }
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
@@ -142,7 +76,7 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({ isModelOpen, item, on
                             <label className="block text-sm font-medium text-black mb-1">Empleado</label>
                             <input
                                 type="text"
-                                value={item.empleado}
+                                value={item.entrevistado}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                             />
@@ -169,7 +103,7 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({ isModelOpen, item, on
                             <label className="block text-sm font-medium text-black mb-1">Fecha de Ingreso</label>
                             <div className="relative">
                                 <input
-                                    type="date"
+                                    type="text"
                                     value={item.fechaIngreso}
                                     className="w-full px-3 py-2 pr-10 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                     placeholder="dd/mm/yyyy"
@@ -233,37 +167,43 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({ isModelOpen, item, on
                                     <th className="border border-gray-200 px-2 py-2 text-left text-xs font-semibold text-black">Tipo Verificación</th>
                                     <th className="border border-gray-200 px-2 py-2 text-left text-xs font-semibold text-black">Fecha Presentación</th>
                                     <th className="border border-gray-200 px-2 py-2 text-left text-xs font-semibold text-black">Fecha Fiscalización</th>
-                                    <th className="border border-gray-200 px-2 py-2 text-left text-xs font-semibold text-black">Seleccionar</th>
+                                    <th className="border border-gray-200 px-3 py-2 text-left text-xs font-semibold text-black"> Seleccionar </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {documentos.map((doc, index) => (
+                                {data.map((doc, index) => (
                                     <tr key={index} className="hover:bg-gray-50">
-                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.requisito}</td>
-                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.tipo}</td>
-                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.descripcion}</td>
+                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.requisitoFiscalizado}</td>
+                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.tipoDocumentofoleo}</td>
+                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.descripcionDocumento}</td>
                                         <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.emisor}</td>
-                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.sector}</td>
+                                        <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.sectorEmpresaEmisora}</td>
                                         <td className="border border-gray-200 px-2 py-2 text-xs text-black">
-                                            {doc.verificacion === null ? (
+                                            {doc.tipoVerificacion === null || doc.tipoVerificacion === undefined ? (
                                                 <button onClick={() => handleRowClick(doc)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors">
                                                     AGREGAR
                                                 </button>
                                             ) : (
-                                                <span className="text-black">{doc.verificacion}</span>
+                                                <span className="text-black">{doc.tipoVerificacion}</span>
                                             )}
                                         </td>
                                         <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.fechaPresentacion}</td>
                                         <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.fechaFiscalizacion}</td>
-                                        <td className="border border-gray-200 px-2 py-2 text-center">
-                                            <input type="checkbox" className="w-4 h-4" />
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedRows.includes(item.id)}
+                                                onChange={() => onSelectRow(item.id)}
+                                            />
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <TipoFiscalizacion isTipoFiscalizacionOpen={isTipoFiscalizacionOpen} onClose={() => setIsTipoFiscalizacionOpen(false)} selectedTipoFiscalizacion={selectedTipoFiscalizacion} />
+                    {isTipoFiscalizacionOpen && 
+                        <TipoFiscalizacion rowSelected={rowSelected} onClose={() => setIsTipoFiscalizacionOpen(false)} selectedTipoFiscalizacion={selectedTipoFiscalizacion} />
+                    }
                     <Convocatoria isConvocatoriaOpen={isConvocatoriaOpen} onClose={() => setIsConvocatoriaOpen(false)} pdfUrl={"https://drive.google.com/file/d/1hzklZXo7LM-EpsJBqi7wdbSWjVvXAnP3/preview"} />
                     {/* Botones del Modal */}
                     <div className="flex justify-end space-x-3 mt-6">
@@ -273,7 +213,9 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({ isModelOpen, item, on
                         >
                             Cancelar
                         </button>
-                        <button className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
+                        <button className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
+                            onClick={handleGuardar}
+                        >
                             Guardar
                         </button>
                     </div>

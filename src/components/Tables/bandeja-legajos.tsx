@@ -1,76 +1,187 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect } from 'react';
 import { Search, Filter, RefreshCw, Plus, Calendar, X } from 'lucide-react';
 import DocumentosModal from '../Modal/documentos';
+import DependenciaSelect from '../Elements/Select'
+import { searchForDates, searchForEmpleado, searchForDependency, searchForNumeroLegajo,searchDocumentoForEmpleado } from '../../api/legajosApi';
+import {TipoVerificacion} from '../../Interfaces/TipoVerificacion';
+
 interface BandejaLegajosProps {
   selectedMenuItem: string;
 }
-
+interface Legajo {
+  id: string;
+  fechaIngreso:string;
+  numeroLegajo:string;
+  registroLaboral:string;
+  tipoDocumento:string;
+  documento:string;
+  entrevistado:string;
+  dependencia:string;
+  tipoEmpleado:string;
+  fiscalizacionInicio:string;
+  fiscalizacionFin:string;
+  cargo:string;
+}
+interface Response {
+    totalRecords: number;
+    page: number;
+    pageSize:number;
+    totalPages: number;
+    data: any;
+}
+interface DocumentoProps {
+    id: string ;
+    requisitoFiscalizado: string;
+    tipoDocumentofoleo: string;
+    descripcionDocumento: string;
+    emisor: string;
+    sectorEmpresaEmisora: string;
+    tipoVerificacion: string | null;
+    tipoVerificacionId: string | null;
+    subTipoVerificacion: string | null;
+    subTipoVerificacionId: string | null;
+    fechaPresentacion: string;
+    fechaFiscalizacion: string;
+}
 const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => {
-  const [fechaInicio, setFechaInicio] = useState('27/07/2025');
+  const fechaActual = new Date();
+  const año = fechaActual.getFullYear();
+  const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
+  const dia = String(fechaActual.getDate()).padStart(2, '0');
+  const fechaFormateada = `${año}-${mes}-${dia}`;
+  const [fechaInicio, setFechaInicio] = useState(fechaFormateada);
+  const [fechaFin, setFechaFin] = useState(fechaFormateada);
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const [fechaFin, setFechaFin] = useState('31/07/2025');
   const [empleado, setEmpleado] = useState('');
   const [dependencia, setDependencia] = useState('OFICINA RECURSOS HUMANOS');
+  const [numeroLegajo, setNumeroLegajo] = useState('');
+  const [idCheck, setIdCheck] = useState('1');
+  const [Legajo, setLegajo] = useState('');
+  const [Legajos, setLegajos] = useState<Legajo[]>([]);
 
-  const [Legajo,setLegajo] = useState(''); 
+  const [isDisableFechas,setIsDisableFechas] = useState(false);
+  const [isDisableNumeroLegajo,setIsDisableNumeroLegajo] = useState(true);
+  const [isDisableEmpleado,setIsDisableEmpleado] = useState(true);
+  const [isDisableDependencia,setIsDisableDependencia] = useState(true);
 
-  const Legajos = [
-    {
-      fechaIngreso: '08/07/2025',
-      legajo: '20250701',
-      registro: 'CAS',
-      doc: 'DNI',
-      documento: '47526959',
-      empleado: 'GUERRERO VARGAS WILMAN ANDRÉ',
-      dependencia: 'UND VERIF SERV EDUC SUP UNIV',
-      tipoEmpleado: 'SERV CIVIL',
-      fiscalizacionInicio: '08/07/2025',
-      fiscalizacionFin: '08/07/2025',
-      cargo: 'ANALISTA I-EVALUADOR'
-    },{
-      fechaIngreso: '07/07/2025',
-      legajo: '20250701',
-      registro: 'CAS',
-      doc: 'DNI',
-      documento: '40654847',
-      empleado: 'MELENDEZ ESCAMILLO CLOTILDE ELVA',
-      dependencia: 'OFICINA RECURSOS HUMANOS',
-      tipoEmpleado: 'SERV CIVIL',
-      fiscalizacionInicio: '07/07/2025',
-      fiscalizacionFin: '07/07/2025',
-      cargo: 'ANALISTA I-EVALUADOR'
-    },{
-      fechaIngreso: '23/06/2025',
-      legajo: '20250601',
-      registro: 'CAS',
-      doc: 'DNI',
-      documento: '73061605',
-      empleado: 'OSCCO MENDOCILLA JOSE LEONARDO',
-      dependencia: 'OFICINA RECURSOS HUMANOS',
-      tipoEmpleado: 'SERV CIVIL',
-      fiscalizacionInicio: '23/06/2025',
-      fiscalizacionFin: '23/06/2025',
-      cargo: 'ANALISTA I-EVALUADOR'
-    },{
-      fechaIngreso: '17/02/2025',
-      legajo: '20250201',
-      registro: 'SERV CIV',
-      doc: 'DNI',
-      documento: '18897679',
-      empleado: 'MUÑOZ PRETELL JUAN JULIO',
-      dependencia: 'OFICINA DE TECNOLOGIAS DE LA IMFORMACIÓN',
-      tipoEmpleado: 'FUNCIONARIO',
-      fiscalizacionInicio: '17/02/2025',
-      fiscalizacionFin: '12/02/2025',
-      cargo: 'ANALISTA I-EVALUADOR'
+  const [page, setPage] = useState(1);
+  const [pagePrevia, setPagePrevia] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [documentos, setDocumentos] = useState<DocumentoProps[]>([]);
+
+  const fetchDocumento = async(id:string) => {
+    try {
+      var resultado :any;
+        var resultado = await searchDocumentoForEmpleado(id);
+        if(resultado.success)
+          setDocumentos(resultado.data);
+        else{
+          alert(resultado.menssage);
+        }
+    } catch (error) {
+        console.error("Error cargando Documentos:", error);
     }
-  ];
-
-  const openModal = (item :any) => {
+  };
+  const selectedTipoFiscalizacion = (tipoVer: TipoVerificacion) => {
+    console.log(tipoVer)
+    const updatedDocumentos = [...documentos];
+    updatedDocumentos.forEach((doc) => {
+        if (doc.id == tipoVer?.id) {
+            doc.tipoVerificacion = tipoVer.tipoVerificacion;
+            doc.tipoVerificacionId = tipoVer.tipoVerificacionId;
+            doc.subTipoVerificacion = tipoVer.subTipoVerificacion;
+            doc.subTipoVerificacionId = tipoVer.subTipoVerificacionId;
+        }
+    });
+    setDocumentos(updatedDocumentos);
+  }
+  const openModal = (item: any) => {
     setLegajo(item);
+    fetchDocumento(item.id);
     setIsOpenModal(true);
   };
+    const handleChangeOption = (idOption:string) => {
+        setIdCheck(idOption)
+        switch (idOption) {
+            case "1":
+                setIsDisableFechas(false);
+                setIsDisableNumeroLegajo(true);
+                setIsDisableEmpleado(true);
+                setIsDisableDependencia(true);
+                break;
+            case "2":
+                setIsDisableFechas(true);
+                setIsDisableNumeroLegajo(false);
+                setIsDisableEmpleado(true);
+                setIsDisableDependencia(true);
+                break;
+            case "3":
+                setIsDisableFechas(true);
+                setIsDisableNumeroLegajo(true);
+                setIsDisableEmpleado(false);
+                setIsDisableDependencia(true);
+                break;
+            case "4":
+                setIsDisableFechas(true);
+                setIsDisableNumeroLegajo(true);
+                setIsDisableEmpleado(true);
+                setIsDisableDependencia(false);
+                break;
+            default:
+                break;
+        }
+    
+    }
+    const selectValor = (optionId:string) =>{
+        setDependencia(optionId)
+    }
 
+    const handleClickLimpiar = ()=>{
+        setFechaInicio(fechaFormateada);
+        setFechaFin(fechaFormateada);
+        setEmpleado('');
+        setDependencia('0');
+        setNumeroLegajo('');
+    }
+    useEffect(() => {
+            const fetchLegajos = async () => {
+            try {
+                if(Legajos.length != 0)
+                    await handleClickConsultar();
+            } catch (error) {
+                console.error("Error cargando Legajos:", error);
+            }
+            };
+            fetchLegajos();
+        }, [page]);
+    const handleClickConsultar = async()=>{
+        let response: any;
+        if(idCheck == '1')
+            response = await searchForDates(fechaInicio,fechaFin,page,pageSize)
+        if(idCheck =='2')
+            response = await searchForNumeroLegajo(numeroLegajo,page,pageSize)
+        if(idCheck =='3')
+            response = await searchForEmpleado(empleado,page,pageSize)
+        if(idCheck =='4')
+            response = await searchForDependency(dependencia,page,pageSize)
+        if(response.success ){
+          setLegajos(response.data);
+          setTotalPages(response.totalPages);
+          setPage(response.page);
+        }else {
+          alert(response.menssage);
+          setPage(pagePrevia);
+        }
+    }
+    const handleSelectRow = (id:string) => {
+    setSelectedRows((prev) =>
+      prev.includes(id)
+        ? prev.filter((rowId) => rowId !== id)
+        : [...prev, id]
+    );
+  };
   return (
     <main className="flex-1 p-6 bg-gray-50">
       <div className="bg-white rounded-lg shadow">
@@ -83,77 +194,119 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
 
         {/* Filtros */}
         <div className="p-6 border-b border-gray-200 bg-gray-50">
-          <h3 className="text-sm font-semibold text-black mb-4">Filtros de búsqueda2</h3>
+          <h3 className="text-sm font-semibold text-black mb-4">Filtros de búsqueda</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-4 md:grid-cols-11 gap-4">
+              <div className="grid col-span-1 place-items-center  ">
+                <input
+                  type="radio"
+                  name="activaFiltro"
+                  value="1"
+                  onChange={(e) => handleChangeOption(e.target.value)}
+                  checked={!isDisableFechas}
+                />
+              </div>
+              <div className="col-span-5">
+                <label className="block text-sm text-black mb-1">Fec. Ing.</label>
+                <input
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  disabled={isDisableFechas}
+                />
+              </div>
+              <div className="col-span-5">
+                <label className="block text-sm text-black mb-1">al</label>
+                <input
+                  type="date"
+                  value={fechaFin}
+                  onChange={(e) => setFechaFin(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  disabled={isDisableFechas}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
+              <div className="grid col-span-1 place-items-center">
+                <input
+                  type="radio"
+                  name="activaFiltro"
+                  value="2"
+                  onChange={(e) => handleChangeOption(e.target.value)}
+                />
+              </div>
+              <div className="col-span-10">
+                <div>
+                  <label className="block text-sm text-black mb-1">N° Legajo</label>
+                  <input
+                    type="text"
+                    value={numeroLegajo}
+                    onChange={(e) => setNumeroLegajo(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                    disabled={isDisableNumeroLegajo}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
+              <div className="grid col-span-1 place-items-center">
+                <input
+                  type="radio"
+                  name="activaFiltro"
+                  value="3"
+                  onChange={(e) => handleChangeOption(e.target.value)}
+                />
+              </div>
+              <div className="col-span-10">
+                <label className="block text-sm text-black mb-1">Empleado</label>
+                <input
+                  type="text"
+                  value={empleado}
+                  onChange={(e) => setEmpleado(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  disabled={isDisableEmpleado}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
+              <div className="grid col-span-1 place-items-center">
+                <input
+                  type="radio"
+                  name="activaFiltro"
+                  value="4"
+                  onChange={(e) => handleChangeOption(e.target.value)}
+                />
+              </div>
+              <div className="col-span-10">
+                <label className="block text-sm text-black mb-1">Dependencia</label>
+                <DependenciaSelect dependencia={dependencia} selectValor={selectValor} isDisableDependencia={isDisableDependencia} />
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <label className="block text-sm text-black mb-1">Fec. Ing.</label>
-              <input
-                type="text"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-black mb-1">al</label>
-              <input
-                type="text"
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-black mb-1">N° Legajo</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              />
-            </div>
-            <div className="flex items-end space-x-2">
-              <button className="px-4 py-2 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                className="px-4 py-2 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+                onClick={() => handleClickLimpiar()}
+              >
                 Limpiar
               </button>
-              <button className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
+              <button
+                onClick={() => handleClickConsultar()}
+                className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
                 Consultar
               </button>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm text-black mb-1">Empleado</label>
-              <input
-                type="text"
-                value={empleado}
-                onChange={(e) => setEmpleado(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-black mb-1">Dependencia</label>
-              <select
-                value={dependencia}
-                onChange={(e) => setDependencia(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              >
-                <option value="OFICINA RECURSOS HUMANOS">OFICINA RECURSOS HUMANOS</option>
-                <option value="UND VERIF SERV EDUC SUP UNIV">UND VERIF SERV EDUC SUP UNIV</option>
-                <option value="ORC DE COMUNICACIONES">ORC DE COMUNICACIONES</option>
-              </select>
-            </div>
-          </div>
         </div>
-
         {/* Listado de Ingresantes */}
         <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center  mb-4">
             <h3 className="text-sm font-semibold text-black">Listado de Ingresantes</h3>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2">
-              <Plus className="h-4 w-4" />
-              <span>Agregar Legajo</span>
-            </button>
           </div>
 
           <div className="overflow-x-auto">
@@ -177,11 +330,11 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
                 {Legajos.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fechaIngreso}</td>
-                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.legajo}</td>
-                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.registro}</td>
-                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.doc}</td>
+                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.numeroLegajo}</td>
+                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.registroLaboral}</td>
+                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.tipoDocumento}</td>
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.documento}</td>
-                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.empleado}</td>
+                    <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.entrevistado}</td>
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.dependencia}</td>
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.tipoEmpleado}</td>
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fiscalizacionInicio}</td>
@@ -197,16 +350,30 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
               </tbody>
             </table>
           </div>
-          <DocumentosModal isModelOpen={isOpenModal} item={Legajo} onClose={() => setIsOpenModal(false)} />    
+          {isOpenModal && 
+            <DocumentosModal data={documentos} item={Legajo} onClose={() => setIsOpenModal(false) } selectedRows={selectedRows} onSelectRow={handleSelectRow} selectedTipoFiscalizacion={selectedTipoFiscalizacion} />
+          }
           {/* Paginación */}
           <div className="flex items-center justify-center mt-4 space-x-2">
-            <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded">
+            <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+              disabled={page === 1}
+                            onClick={() => {
+                                setPagePrevia(page);
+                                setPage(page -1);
+                            }}     
+            >
               Anterior
             </button>
             <span className="px-3 py-1 text-sm text-black">1</span>
             <span className="px-3 py-1 text-sm text-black">de</span>
-            <span className="px-3 py-1 text-sm text-black">3</span>
-            <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded">
+            <span className="px-3 py-1 text-sm text-black">{totalPages}</span>
+            <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+            disabled={page === 1}
+                            onClick={() => {
+                                setPagePrevia(page);
+                                setPage(page +1);
+                            }}     
+            >
               Siguiente
             </button>
           </div>

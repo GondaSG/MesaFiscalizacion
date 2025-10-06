@@ -1,10 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-
+import { searchForDates, searchForEmpleado, searchForDependency, searchForConvocatoria, guardarLegajos } from '../../api/ingresanteApi';
+import DependenciaSelect from '../Elements/Select'
+import { Toast } from 'bootstrap';
+import { Ingresante } from "../../Interfaces/Ingresantes";
+import { Response } from "../../Interfaces/Response";
 interface BandejaIngresantesProps {
     selectedMenuItem: string;
 }
 
+
+interface Dependencia {
+    id: string;
+    name :string;
+}
 const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuItem }) => {
     const fechaActual = new Date();
     const año = fechaActual.getFullYear();
@@ -14,75 +23,59 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
     const [fechaInicio, setFechaInicio] = useState(fechaFormateada);
     const [fechaFin, setFechaFin] = useState(fechaFormateada);
     const [empleado, setEmpleado] = useState('');
-    const [dependencia, setDependencia] = useState('OFICINA RECURSOS HUMANOS');
+    const [convocatoria, setConvocatoria] = useState('');
+    const [dependencia, setDependencia] = useState('0');
 
-    const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [idCheck,setIdCheck] = useState('1');
+    const [isDisableFechas,setIsDisableFechas] = useState(false);
+    const [isDisableConvocatoria,setIsDisableConvocatoria] = useState(true);
+    const [isDisableEmpleado,setIsDisableEmpleado] = useState(true);
+    const [isDisableDependencia,setIsDisableDependencia] = useState(true);
+
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
     const headerCheckboxRef = useRef<HTMLInputElement>(null);
-    
-    const ingresantes = [
-        {
-            id: 1,
-            fecha: '29/07/2025',
-            convocatoria: '037-2025-SUNEDU',
-            registro: 'CAI',
-            doc: 'DNI',
-            documento: '47525889',
-            entrevistado: 'GUERRERO ANDOAS WILMAN ANDRÉ',
-            cargo: 'ANALISTA EVALUADOR',
-            dependencia: 'UND VERIF SERV EDUC SUP UNIV',
-            tipoEmpleado: 'SERV CIVIL'
-        },
-        {
-            id: 2,
-            fecha: '27/07/2025',
-            convocatoria: '037-2025-SUNEDU',
-            registro: 'CAI',
-            doc: 'DNI',
-            documento: '45614487',
-            entrevistado: 'MELENDEZ ESCAMILLO CLOTILDE ELVA',
-            cargo: 'ASISTENTE LEGAJOS',
-            dependencia: 'OFICINA RECURSOS HUMANOS',
-            tipoEmpleado: 'SERV CIVIL'
-        },
-        {
-            id: 3,
-            fecha: '31/07/2025',
-            convocatoria: '082-2025-SUNEDU',
-            registro: 'OAIRHH',
-            doc: 'DNI',
-            documento: '72903496',
-            entrevistado: 'RECAVARREN VILLAVICENCIO JORGE LUI',
-            cargo: 'ANALISTA PROCEDIMIENTOS',
-            dependencia: 'UND VERIF SERV EDUC SUP UNIV',
-            tipoEmpleado: 'SERV CIVIL'
-        },
-        {
-            id: 4,
-            fecha: '25/06/2025',
-            convocatoria: '037-2025-SUNEDU',
-            registro: 'CAI',
-            doc: 'DNI',
-            documento: '73046066',
-            entrevistado: 'CISCO MENDOCILLA JOSE LEONARDO',
-            cargo: 'ANALISTA II PRODUCTO AUDITOP',
-            dependencia: 'ORC DE COMUNICACIONES',
-            tipoEmpleado: 'SERV CIVIL'
-        },
-        {
-            id: 5,
-            fecha: '27/08/2025',
-            convocatoria: '037-2025-SUNEDU',
-            registro: 'OAIRHH',
-            doc: 'DNI',
-            documento: '60047442',
-            entrevistado: 'BRAVO CHAVEZ INGRID ISABEL',
-            cargo: 'ANALISTA PRESUPUESTO',
-            dependencia: 'UND VERIF SERV EDUC SUP UNIV',
-            tipoEmpleado: 'SERV CIVIL'
+    const [ingresantes, setIngresantes] = useState<Ingresante[]>([]);
+
+    const [page, setPage] = useState(1);
+    const [pagePrevia, setPagePrevia] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+
+    const handleChangeOption = (idOption:string) => {
+        setIdCheck(idOption)
+        switch (idOption) {
+            case "1":
+                setIsDisableFechas(false);
+                setIsDisableConvocatoria(true);
+                setIsDisableEmpleado(true);
+                setIsDisableDependencia(true);
+                break;
+            case "2":
+                setIsDisableFechas(true);
+                setIsDisableConvocatoria(false);
+                setIsDisableEmpleado(true);
+                setIsDisableDependencia(true);
+                break;
+            case "3":
+                setIsDisableFechas(true);
+                setIsDisableConvocatoria(true);
+                setIsDisableEmpleado(false);
+                setIsDisableDependencia(true);
+                break;
+            case "4":
+                setIsDisableFechas(true);
+                setIsDisableConvocatoria(true);
+                setIsDisableEmpleado(true);
+                setIsDisableDependencia(false);
+                break;
+            default:
+                break;
         }
-    ];
+    
+    }
 
     useEffect(() => {
+
         if (!headerCheckboxRef.current) return;
 
         if (selectedRows.length === 0) {
@@ -94,8 +87,24 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
         } else {
             headerCheckboxRef.current.indeterminate = true;
         }
-    }, [selectedRows, ingresantes.length]);
-    const handleSelectRow = (id: number) => {
+    }, [selectedRows, ingresantes.length,]);
+    
+    useEffect(() => {
+        const fetchIngresantes = async () => {
+        try {
+            if(ingresantes.length != 0)
+                await handleClickConsultar();
+        } catch (error) {
+            console.error("Error cargando Ingresantes:", error);
+        }
+        };
+        fetchIngresantes();
+    }, [page]);
+
+    const selectValor = (optionId:string) =>{
+        setDependencia(optionId)
+    }
+    const handleSelectRow = (id: string) => {
         setSelectedRows((prev) =>
             prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
         );
@@ -107,7 +116,37 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
             setSelectedRows(ingresantes.map((r) => r.id)); // seleccionar todos
         }
     };
-
+    const handleClickLimpiar = ()=>{
+        setFechaInicio(fechaFormateada);
+        setFechaFin(fechaFormateada);
+        setEmpleado('');
+        setDependencia('0');
+        setConvocatoria('');
+    }
+    const handleClickConsultar = async()=>{
+        let response: any;
+        if(idCheck == '1')
+            response = await searchForDates(fechaInicio,fechaFin,page,pageSize)
+        if(idCheck =='2')
+            response = await searchForConvocatoria(convocatoria,page,pageSize)
+        if(idCheck =='3')
+            response = await searchForEmpleado(empleado,page,pageSize)
+        if(idCheck =='4')
+            response = await searchForDependency(dependencia,page,pageSize)
+        
+        if(response.success ){
+            setIngresantes(response.data);
+            setTotalPages(response.totalPages);
+            setPage(response.page);
+        }else {
+            alert(response.menssage);
+            setPage(pagePrevia);
+        }
+    }
+    const handleAgregarLegajoClick = async() =>{
+        const result = await guardarLegajos(selectedRows);
+        alert(result.menssage)
+    }
     return (
         <main className="flex-1 p-6 bg-gray-50">
             <div className="bg-white rounded-lg shadow">
@@ -121,64 +160,111 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
                 {/* Filtros */}
                 <div className="p-6 border-b border-gray-200 bg-gray-50">
                     <h3 className="text-sm font-semibold text-black mb-4">Filtros de búsqueda</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-4 md:grid-cols-11 gap-4">
+                                <div className="grid col-span-1 place-items-center  ">
+                                    <input 
+                                        type="radio" 
+                                        name="activaFiltro" 
+                                        value="1" 
+                                        onChange={(e) => handleChangeOption(e.target.value)} 
+                                        checked={!isDisableFechas}
+                                        />
+                                </div>
+                                <div className="col-span-5">
+                                    <label className="block text-sm text-black mb-1">Fec. Ing.</label>
+                                    <input
+                                        type="date"
+                                        value={fechaInicio}
+                                        onChange={(e) => setFechaInicio(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                                        disabled={isDisableFechas}
+                                        />
+                                </div>
+                                <div className="col-span-5">
+                                    <label className="block text-sm text-black mb-1">al</label>
+                                    <input
+                                        type="date"
+                                        value={fechaFin}
+                                        onChange={(e) => setFechaFin(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                                        disabled={isDisableFechas}
+                                        />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
+                                <div className="grid col-span-1 place-items-center">
+                                    <input 
+                                        type="radio" 
+                                        name="activaFiltro" 
+                                        value="2" 
+                                        onChange={(e) => handleChangeOption(e.target.value)}
+                                        />
+                                </div>
+                                <div className="col-span-10">
+                                    <div>
+                                        <label className="block text-sm text-black mb-1">N° Convocatoria</label>
+                                        <input
+                                            type="text"
+                                            value={convocatoria}
+                                            onChange={(e) => setConvocatoria(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                                            disabled={isDisableConvocatoria}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
+                                <div className="grid col-span-1 place-items-center">
+                                    <input 
+                                        type="radio" 
+                                        name="activaFiltro" 
+                                        value="3" 
+                                        onChange={(e) => handleChangeOption(e.target.value)}
+                                        />
+                                </div>
+                                <div className="col-span-10">
+                                    <label className="block text-sm text-black mb-1">Empleado</label>
+                                    <input
+                                    type="text"
+                                    value={empleado}
+                                    onChange={(e) => setEmpleado(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                                    disabled={isDisableEmpleado}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
+                                <div className="grid col-span-1 place-items-center">
+                                    <input 
+                                        type="radio" 
+                                        name="activaFiltro" 
+                                        value="4" 
+                                        onChange={(e) => handleChangeOption(e.target.value)}
+                                        />
+                                </div>
+                                <div className="col-span-10">
+                                    <label className="block text-sm text-black mb-1">Dependencia</label>
+                                    <DependenciaSelect dependencia={dependencia} selectValor={selectValor} isDisableDependencia={isDisableDependencia}/>
+                                </div>
+                            </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                        <div>
-                            <label className="block text-sm text-black mb-1">Fec. Ing.</label>
-                            <input
-                                type="date"
-                                value={fechaInicio}
-                                onChange={(e) => setFechaInicio(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-black mb-1">al</label>
-                            <input
-                                type="date"
-                                value={fechaFin}
-                                onChange={(e) => setFechaFin(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-black mb-1">N° Convocatoria</label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                            />
-                        </div>
-                        <div className="flex items-end space-x-2">
-                            <button className="px-4 py-2 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4"> 
+                        <div className="flex justify-end space-x-3 mt-6">
+                            <button
+                                className="px-4 py-2 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+                                onClick={()=> handleClickLimpiar()}
+                            >
                                 Limpiar
                             </button>
-                            <button className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
+                            <button 
+                            onClick={()=> handleClickConsultar()}
+                            className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
                                 Consultar
                             </button>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm text-black mb-1">Empleado</label>
-                            <input
-                                type="text"
-                                value={empleado}
-                                onChange={(e) => setEmpleado(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-black mb-1">Dependencia</label>
-                            <select
-                                value={dependencia}
-                                onChange={(e) => setDependencia(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                            >
-                                <option value="OFICINA RECURSOS HUMANOS">OFICINA RECURSOS HUMANOS</option>
-                                <option value="UND VERIF SERV EDUC SUP UNIV">UND VERIF SERV EDUC SUP UNIV</option>
-                                <option value="ORC DE COMUNICACIONES">ORC DE COMUNICACIONES</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -187,7 +273,9 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-semibold text-black">Listado de Ingresantes</h3>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                            onClick={()=>handleAgregarLegajoClick()}
+                        >
                             <Plus className="h-4 w-4" />
                             <span>Agregar Legajo</span>
                         </button>
@@ -226,10 +314,10 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
                                                 onChange={() => handleSelectRow(item.id)}
                                             />
                                         </td>
-                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fecha}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fechaIngreso}</td>
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.convocatoria}</td>
-                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.registro}</td>
-                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.doc}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.registroLaboral}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.tipoDocumento}</td>
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.documento}</td>
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.entrevistado}</td>
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.cargo}</td>
@@ -243,13 +331,25 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
 
                     {/* Paginación */}
                     <div className="flex items-center justify-center mt-4 space-x-2">
-                        <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded">
+                        <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                            disabled={page === 1}
+                            onClick={() => {
+                                setPagePrevia(page);
+                                setPage(page -1);
+                            }}        
+                        >
                             Anterior
                         </button>
                         <span className="px-3 py-1 text-sm text-black">1</span>
                         <span className="px-3 py-1 text-sm text-black">de</span>
-                        <span className="px-3 py-1 text-sm text-black">3</span>
-                        <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded">
+                        <span className="px-3 py-1 text-sm text-black">{totalPages}</span>
+                        <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                            disabled={page === totalPages}
+                            onClick={() => {
+                                setPagePrevia(page);
+                                setPage(page +1);}  
+                            }  
+                        >
                             Siguiente
                         </button>
                     </div>

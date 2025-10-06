@@ -1,28 +1,65 @@
 import React from "react";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState,useEffect } from "react";
+import { useQuery } from '@tanstack/react-query'
+import { list } from '../../api/tipoVerificacionApi';
+import {TipoVerificacion} from '../../Interfaces/TipoVerificacion';
 
 interface TipoFiscalizacionPros {
-    isTipoFiscalizacionOpen: boolean;
+    rowSelected: any;
     onClose: () => void;
-    selectedTipoFiscalizacion: (value: string) => void;
+    selectedTipoFiscalizacion: (value: TipoVerificacion) => void;
 }
-const TipoFiscalizacion: React.FC<TipoFiscalizacionPros> = ({ isTipoFiscalizacionOpen, onClose , selectedTipoFiscalizacion }) => {
 
-    const [tipoFiscalizacion, setTipoFiscalizacion] = React.useState<string>('');
-    const [subTipoFiscalizacion, setSubTipoFiscalizacion] = React.useState<string>('');
+const TipoFiscalizacion: React.FC<TipoFiscalizacionPros> = ({ rowSelected, onClose , selectedTipoFiscalizacion }) => {
+
+    const [tipoFiscalizacion, setTipoFiscalizacion] = React.useState<string>('Seleccione');
+    const [subTipoFiscalizacion, setSubTipoFiscalizacion] = React.useState<string>('Seleccione');
+    const { data : response , isLoading } = useQuery({
+        queryKey: ["tipoVerificacion"],
+        queryFn: list,
+        staleTime: Infinity,    // nunca se borra de la caché en la sesión
+    });
+    const [subTipoFiscalizacions, setSubTipoFiscalizacions] = React.useState<TipoVerificacion[]>([]);
+    if (isLoading) return <p>Cargando...</p>;
+    if(!response.success) {
+        alert(response.menssage);
+        return;
+    }
+    const data = response.data || [];
+    const tipoVerificacionOptions = Array.from(
+        new Map(data.map(item => [item.tipoVerificacionId, item])).values());
+    
+    const handleChangeTipoFiscalizacion = (event: React.ChangeEvent<HTMLSelectElement>)=>{
+        setTipoFiscalizacion(event.target.options[event.target.selectedIndex].text)
+        if(tipoFiscalizacion !== ''){
+            const datosFilter: TipoVerificacion[] = data.filter(item => item.tipoVerificacionId === event.target.value)
+            setSubTipoFiscalizacions(datosFilter);
+        }
+    }
 
     const handleClick = () => {
-        if(tipoFiscalizacion === '' ){
-            alert('Seleccione un tipo de verificacion');
+        if(tipoFiscalizacion === 'Seleccione' ){
+            alert('Seleccione un tipo de fiscalización');
             return;
         }
-        console.log(tipoFiscalizacion);
-        selectedTipoFiscalizacion(tipoFiscalizacion);
-        
+        if(subTipoFiscalizacion === 'Seleccione' ){
+            alert('Seleccione un sub elemento de fiscalización');
+            return;
+        }
+        const datosFilter: TipoVerificacion = data.find(item => item.subTipoVerificacion === subTipoFiscalizacion);
+        console.log('row',rowSelected)
+        datosFilter.id = rowSelected.id;
+        selectedTipoFiscalizacion(datosFilter);
+        setTipoFiscalizacion('Seleccione');
+        setSubTipoFiscalizacion('Seleccione');
         onClose();
     }
-    if (!isTipoFiscalizacionOpen) return null;
+    const onCloseModal = () => {
+        setTipoFiscalizacion('Seleccione');
+        setSubTipoFiscalizacion('Seleccione');
+        onClose()
+    }
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-sm w-full max-h-[90vh] overflow-hidden">
@@ -32,7 +69,7 @@ const TipoFiscalizacion: React.FC<TipoFiscalizacionPros> = ({ isTipoFiscalizacio
                         Tipo de Fiscalización
                     </h3>
                     <button
-                        onClick={onClose}
+                        onClick={onCloseModal}
                         className="text-white hover:text-gray-200 transition-colors"
                     >
                         <X className="h-6 w-6" />
@@ -48,51 +85,40 @@ const TipoFiscalizacion: React.FC<TipoFiscalizacionPros> = ({ isTipoFiscalizacio
                         </div>
                         <div className="flex flex-col">
                             <select
-                                onChange={(e) => {
-                                    setTipoFiscalizacion(e.target.options[e.target.selectedIndex].text)
-                                }}
+                                onChange={(e) => handleChangeTipoFiscalizacion(e)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent">
-                                <option value="" >Seleccione</option>
-                                <option value="1">SDG</option>
-                                <option value="2">WEB</option>
+                                    <option value="" >Seleccione</option>
+                                {tipoVerificacionOptions.map((item) => (
+                                    <option value={item.tipoVerificacionId}>{item.tipoVerificacion}</option>
+                                 ))}
                             </select>
                         </div>
-
-                        {tipoFiscalizacion === '2' ? (
-                            <div className="flex flex-col">
-                                <label className="block text-sm font-medium text-black mb-1">Pagina Web</label>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col">
-                                <label className="block text-sm font-medium text-black mb-1">Tipo documento</label>
-                            </div>
-                        )}
-                        {tipoFiscalizacion === '2' ? (
-                            <div className="flex flex-col">
-                                <select
-                                    onChange={
-                                        (e) => setSubTipoFiscalizacion(e.target.options[e.target.selectedIndex].text)
-                                        
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent">
-                                    <option value="1">SUNEDU</option>
-                                    <option value="2">MINEDU</option>
-                                    <option value="3">OTRO</option>
-                                </select>
-                            </div>
-                        ) : (
+                     
+                            {tipoFiscalizacion === 'WEB' && 
+                                <div className="flex flex-col">
+                                    <label className="block text-sm font-medium text-black mb-1">Pagina Web</label>
+                                </div>
+                            } 
+                            {tipoFiscalizacion === 'SGD' && 
+                                <div className="flex flex-col">
+                                    <label className="block text-sm font-medium text-black mb-1">Tipo documento</label>
+                                </div>
+                            }
+                            {tipoFiscalizacion !== 'Seleccione' && 
                             <div className="flex flex-col">
                                 <select
                                     onChange={
                                         (e) => setSubTipoFiscalizacion(e.target.options[e.target.selectedIndex].text)
-                                        
                                     }
                                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent">
-                                    <option value="4">CARTA</option>
-                                    <option value="5">OFICIO</option>
+                                    <option value="" >Seleccione</option>
+                                    {subTipoFiscalizacions.map((item) => (
+                                        <option value={item.subTipoVerificacionId}>{item.subTipoVerificacion}</option>
+                                    ))}
                                 </select>
                             </div>
-                        )}
+                            }
+                        
                     </div>
                     <div className="flex justify-center space-x-3 mt-6">
                         <button 

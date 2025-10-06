@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  input,
+  select {
+    @apply border rounded px-3 py-2 text-sm text-gray-700;
+  }
+
+  input:disabled,
+  select:disabled {
+    @apply opacity-50 cursor-not-allowed bg-gray-100 text-gray-500;
+  }
+}
