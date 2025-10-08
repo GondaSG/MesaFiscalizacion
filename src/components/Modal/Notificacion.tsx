@@ -1,9 +1,10 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { ProcesoFiscalizado } from '../../Interfaces/ProcesoFiscalizado';
 interface NotificacionProps {
     isNotificacionModal: boolean;
     onClose: () => void;
-    row: any;
+    row: ProcesoFiscalizado;
     // You can add more props as needed
 }
 const Notificacion: React.FC<NotificacionProps>  = ({isNotificacionModal, onClose, row}) =>{
@@ -35,7 +36,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.descripcionDocumento}
+                                value={row.descripciondocumento}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -63,8 +64,8 @@ return (
                         </div>
                         <div className="flex flex-col">
                             <input
-                                type="date"
-                                value={row.fechaEstadoActual}
+                                type="text"
+                                value={row.fechaInicio}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -92,7 +93,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.fechaPlazoEspera}
+                                value={row.fechaFin}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -106,7 +107,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.estadoActual}
+                                value={row.estado}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -119,8 +120,8 @@ return (
                         </div>
                         <div className="flex flex-col">
                                 <input
-                                    type="date"
-                                    value={row.observaciones}
+                                    type="text"
+                                    value={row.observacion}
                                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                     readOnly={true}
                                     disabled={true}

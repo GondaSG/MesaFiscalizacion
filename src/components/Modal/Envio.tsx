@@ -1,9 +1,10 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { ProcesoFiscalizado } from '../../Interfaces/ProcesoFiscalizado';
 interface EnvioProps {
     isEnvioModal: boolean;
     onClose: () => void;
-    row: any;
+    row: ProcesoFiscalizado;
     selectedDatos: (estado: string, date:string) => void;
     // You can add more props as needed
 }
@@ -25,12 +26,12 @@ return (
             <div className="bg-white rounded-lg shadow-xl max-w-xl w-full max-h-[90vh] overflow-hidden">
                 {/* Header del Modal */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-blue-600">
-                    {row.tipoVerificacion === 'SGD' && 
+                    {row.tipoverificacion === 'SGD' && 
                         <h3 className="text-lg font-semibold text-white">
                             Envío de Documento
                         </h3>
                     }  
-                    {row.tipoVerificacion === 'WEB' && 
+                    {row.tipoverificacion === 'WEB' && 
                     <h3 className="text-lg font-semibold text-white">
                         Validación WEB
                     </h3>
@@ -55,7 +56,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.descripcionDocumento}
+                                value={row.descripciondocumento}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -78,17 +79,17 @@ return (
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div className="flex flex-col">
-                            {row.tipoVerificacion === 'SGD' && 
+                            {row.tipoverificacion === 'SGD' && 
                                 <label className="block text-sm font-medium text-black mb-1">Tipo Fiscalización</label>
                             }
-                            {row.tipoVerificacion === 'WEB' &&          
+                            {row.tipoverificacion === 'WEB' &&          
                                 <label className="block text-sm font-medium text-black mb-1">Tipo Verificación</label>
                             }   
                         </div>
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.tipoVerificacion}
+                                value={row.tipoverificacion}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -97,24 +98,24 @@ return (
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div className="flex flex-col">
-                            {row.tipoVerificacion === 'SGD' && 
+                            {row.tipoverificacion === 'SGD' && 
                                 <label className="block text-sm font-medium text-black mb-1">Tipo Documento</label>
                             }
-                            {row.tipoVerificacion === 'WEB' &&          
+                            {row.tipoverificacion === 'WEB' &&          
                                 <label className="block text-sm font-medium text-black mb-1">Página Web</label>
                             }   
                         </div>
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.subTipoVerificacion}
+                                value={row.subtipoverificacion}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
                             />
                         </div>
                     </div>
-                    {row.tipoVerificacion === 'SGD' &&
+                    {row.tipoverificacion === 'SGD' &&
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div className="flex flex-col">
                             <label className="block text-sm font-medium text-black mb-1">Documento Enviado</label>
@@ -129,7 +130,7 @@ return (
                             />
                         </div>
                     </div>}
-                    {row.tipoVerificacion === 'SGD' &&
+                    {row.tipoverificacion === 'SGD' &&
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div className="flex flex-col">
                             <label className="blocks text-sm font-medium text-black mb-1">Estado</label>
@@ -137,7 +138,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.estadoActual}
+                                value={row.estado}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -149,7 +150,7 @@ return (
                             <label className="block text-sm font-medium text-black mb-1">Fecha Envío</label>
                         </div>
                         <div className="flex flex-col">
-                            {row.tipoVerificacion === 'SGD' && 
+                            {row.tipoverificacion === 'SGD' && 
                                 <input
                                     type="date"
                                     value={row.fechaEstadoActual}
@@ -158,7 +159,7 @@ return (
                                     disabled={true}
                                 />
                             }
-                            {row.tipoVerificacion === 'WEB' && 
+                            {row.tipoverificacion === 'WEB' && 
                                 <input
                                     type="date"
                                     value={fechaEnvio || row.fechaEstadoActual}
@@ -168,7 +169,7 @@ return (
                             }
                         </div>
                     </div>
-                    {row.tipoVerificacion === 'WEB' &&
+                    {row.tipoverificacion === 'WEB' &&
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div className="flex flex-col">
                             <label className="block text-sm font-medium text-black mb-1">Resultado</label>
@@ -195,7 +196,7 @@ return (
                         className="px-4 py-2 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">
                             Cancelar
                         </button>
-                        {row.tipoVerificacion === 'WEB' && 
+                        {row.tipoverificacion === 'WEB' && 
                         <button 
                         onClick={()=>handleButtonSaveClick()}
                         className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">

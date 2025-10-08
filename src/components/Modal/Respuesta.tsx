@@ -1,10 +1,11 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { compareDateToDate } from '../Help/helper';
+import { ProcesoFiscalizado } from '../../Interfaces/ProcesoFiscalizado';
 interface RespuestaProps {
     isRespuestaModal: boolean;
     onClose: () => void;
-    row: any;
+    row: ProcesoFiscalizado;
     // You can add more props as needed
 }
 const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row }) => {
@@ -19,7 +20,7 @@ const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row })
     const handleClick = () => {
     };
     if (!isRespuestaModal) return null;
-    console.log(compareDateToDate(row.fechaPlazoEspera));
+    //console.log(compareDateToDate(row.fecha));
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-xl w-full max-h-[90vh] overflow-hidden">
@@ -46,7 +47,7 @@ const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row })
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.descripcionDocumento}
+                                value={row.descripciondocumento}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -74,8 +75,8 @@ const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row })
                         </div>
                         <div className="flex flex-col">
                             <input
-                                type="date"
-                                value={row.fechaPlazoEspera}
+                                type="text"
+                                value={row.fechaInicio}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -103,7 +104,7 @@ const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row })
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.fechaPlazoActual}
+                                value={row.fechaFin}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -117,7 +118,7 @@ const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row })
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.subTipoVerificacion}
+                                value={row.subtipoverificacion}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -131,7 +132,7 @@ const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row })
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.documentoRespuesta}
+                                value={row.documentoRecibido}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -190,13 +191,13 @@ const Respuesta: React.FC<RespuestaProps> = ({ isRespuestaModal, onClose, row })
                             <input
                                 type="text"
                                 onChange={(e) => setObservacion(e.target.value)}
-                                value={observacion || row.observaciones}
+                                value={observacion || row.observacion}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                             />
                         </div>
                     </div>
 
-                    {compareDateToDate(row.fechaPlazoEspera) && (
+                    {compareDateToDate(row.fechaFin) && (
                         <div>
                             <div className="flex flex-col">
                                 <p className="block text-danger text-center font-medium mb-1 p-3">Sin Respuesta</p>

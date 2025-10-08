@@ -140,7 +140,6 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
             setPage(response.page);
         }else {
             alert(response.menssage);
-            setPage(pagePrevia);
         }
     }
     const handleAgregarLegajoClick = async() =>{
@@ -305,7 +304,14 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
                                 </tr>
                             </thead>
                             <tbody>
-                                {ingresantes.map((item, index) => (
+                                {ingresantes.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={10} className="border border-gray-200 px-3 py-8 text-center text-sm text-gray-500">
+                                        No hay ingresantes para mostrar para mostrar
+                                        </td>
+                                    </tr>
+                                ) : (
+                                ingresantes.map((item, index) => (
                                     <tr key={index} className="hover:bg-gray-50">
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">
                                             <input
@@ -324,7 +330,7 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.dependencia}</td>
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.tipoEmpleado}</td>
                                     </tr>
-                                ))}
+                                )))}
                             </tbody>
                         </table>
                     </div>
@@ -333,22 +339,16 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
                     <div className="flex items-center justify-center mt-4 space-x-2">
                         <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
                             disabled={page === 1}
-                            onClick={() => {
-                                setPagePrevia(page);
-                                setPage(page -1);
-                            }}        
+                            onClick={() => setPage(page -1)}        
                         >
                             Anterior
                         </button>
-                        <span className="px-3 py-1 text-sm text-black">1</span>
+                        <span className="px-3 py-1 text-sm text-black">{page}</span>
                         <span className="px-3 py-1 text-sm text-black">de</span>
                         <span className="px-3 py-1 text-sm text-black">{totalPages}</span>
                         <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
                             disabled={page === totalPages}
-                            onClick={() => {
-                                setPagePrevia(page);
-                                setPage(page +1);}  
-                            }  
+                            onClick={() => setPage(page +1)}  
                         >
                             Siguiente
                         </button>

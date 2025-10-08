@@ -38,7 +38,11 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedItem, onItemSelect }) => {
       id: 'consultas',
       label: 'Consultas',
       icon: <Users className="h-5 w-5" />,
-      children: []
+      children: [
+        { id: 'documento-notificado', label: 'Documentos Notificados' },
+        { id: 'documento-observado', label: 'Documentos Observados' },
+        { id: 'fiscalizacion-legajos', label: 'Fiscalización Legajos' }
+      ]
     },
     {
       id: 'dashboard',

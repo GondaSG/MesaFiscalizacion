@@ -4,31 +4,12 @@ import DocumentosModal from '../Modal/documentos';
 import DependenciaSelect from '../Elements/Select'
 import { searchForDates, searchForEmpleado, searchForDependency, searchForNumeroLegajo,searchDocumentoForEmpleado } from '../../api/legajosApi';
 import {TipoVerificacion} from '../../Interfaces/TipoVerificacion';
-
+import {Legajo} from '../../Interfaces/Legajo';
+import { MdArticle } from "react-icons/md";
 interface BandejaLegajosProps {
   selectedMenuItem: string;
 }
-interface Legajo {
-  id: string;
-  fechaIngreso:string;
-  numeroLegajo:string;
-  registroLaboral:string;
-  tipoDocumento:string;
-  documento:string;
-  entrevistado:string;
-  dependencia:string;
-  tipoEmpleado:string;
-  fiscalizacionInicio:string;
-  fiscalizacionFin:string;
-  cargo:string;
-}
-interface Response {
-    totalRecords: number;
-    page: number;
-    pageSize:number;
-    totalPages: number;
-    data: any;
-}
+
 interface DocumentoProps {
     id: string ;
     requisitoFiscalizado: string;
@@ -74,7 +55,7 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
   const fetchDocumento = async(id:string) => {
     try {
       var resultado :any;
-        var resultado = await searchDocumentoForEmpleado(id);
+         resultado = await searchDocumentoForEmpleado(id);
         if(resultado.success)
           setDocumentos(resultado.data);
         else{
@@ -327,7 +308,14 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
                 </tr>
               </thead>
               <tbody>
-                {Legajos.map((item, index) => (
+                {Legajos.length === 0 ? (
+                  <tr>
+                      <td colSpan={11} className="border border-gray-200 px-3 py-8 text-center text-sm text-gray-500">
+                      No hay Legajos para mostrar para mostrar
+                      </td>
+                  </tr>
+                ) : (
+                Legajos.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fechaIngreso}</td>
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.numeroLegajo}</td>
@@ -340,13 +328,15 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fiscalizacionInicio}</td>
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fiscalizacionFin}</td>
                     <td className="border border-gray-200 px-3 py-2 text-xs text-black">
-                      <button
+                      <button 
                         onClick={() => openModal(item)}
-                        className="px-4 py-2 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
-                      ></button>
+                        >
+                          <MdArticle color="navy" size={30} />
+                        </button>
+                      
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>
@@ -357,22 +347,16 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
           <div className="flex items-center justify-center mt-4 space-x-2">
             <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
               disabled={page === 1}
-                            onClick={() => {
-                                setPagePrevia(page);
-                                setPage(page -1);
-                            }}     
+                            onClick={() => setPage(page -1)}     
             >
               Anterior
             </button>
-            <span className="px-3 py-1 text-sm text-black">1</span>
+            <span className="px-3 py-1 text-sm text-black">{page}</span>
             <span className="px-3 py-1 text-sm text-black">de</span>
             <span className="px-3 py-1 text-sm text-black">{totalPages}</span>
             <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-            disabled={page === 1}
-                            onClick={() => {
-                                setPagePrevia(page);
-                                setPage(page +1);
-                            }}     
+            disabled={page === totalPages}
+                            onClick={() => setPage(page +1)}     
             >
               Siguiente
             </button>
