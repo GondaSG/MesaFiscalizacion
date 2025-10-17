@@ -3,7 +3,7 @@ import { Search, Filter, RefreshCw, Plus, Calendar, X } from 'lucide-react';
 import DocumentosModal from '../Modal/documentos';
 import DependenciaSelect from '../Elements/Select'
 import { searchForDates, searchForEmpleado, searchForDependency, searchForNumeroLegajo,searchDocumentoForEmpleado } from '../../api/legajosApi';
-import {TipoVerificacion} from '../../Interfaces/TipoVerificacion';
+
 import {Legajo} from '../../Interfaces/Legajo';
 import { MdArticle } from "react-icons/md";
 interface BandejaLegajosProps {
@@ -49,38 +49,11 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
   const [pagePrevia, setPagePrevia] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [documentos, setDocumentos] = useState<DocumentoProps[]>([]);
 
-  const fetchDocumento = async(id:string) => {
-    try {
-      var resultado :any;
-         resultado = await searchDocumentoForEmpleado(id);
-        if(resultado.success)
-          setDocumentos(resultado.data);
-        else{
-          alert(resultado.menssage);
-        }
-    } catch (error) {
-        console.error("Error cargando Documentos:", error);
-    }
-  };
-  const selectedTipoFiscalizacion = (tipoVer: TipoVerificacion) => {
-    console.log(tipoVer)
-    const updatedDocumentos = [...documentos];
-    updatedDocumentos.forEach((doc) => {
-        if (doc.id == tipoVer?.id) {
-            doc.tipoVerificacion = tipoVer.tipoVerificacion;
-            doc.tipoVerificacionId = tipoVer.tipoVerificacionId;
-            doc.subTipoVerificacion = tipoVer.subTipoVerificacion;
-            doc.subTipoVerificacionId = tipoVer.subTipoVerificacionId;
-        }
-    });
-    setDocumentos(updatedDocumentos);
-  }
+
+
   const openModal = (item: any) => {
     setLegajo(item);
-    fetchDocumento(item.id);
     setIsOpenModal(true);
   };
     const handleChangeOption = (idOption:string) => {
@@ -156,13 +129,8 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
           setPage(pagePrevia);
         }
     }
-    const handleSelectRow = (id:string) => {
-    setSelectedRows((prev) =>
-      prev.includes(id)
-        ? prev.filter((rowId) => rowId !== id)
-        : [...prev, id]
-    );
-  };
+
+
   return (
     <main className="flex-1 p-6 bg-gray-50">
       <div className="bg-white rounded-lg shadow">
@@ -341,7 +309,7 @@ const BandejaLegajos: React.FC<BandejaLegajosProps> = ({ selectedMenuItem }) => 
             </table>
           </div>
           {isOpenModal && 
-            <DocumentosModal data={documentos} item={Legajo} onClose={() => setIsOpenModal(false) } selectedRows={selectedRows} onSelectRow={handleSelectRow} selectedTipoFiscalizacion={selectedTipoFiscalizacion} />
+            <DocumentosModal  item={Legajo} onClose={() => setIsOpenModal(false) }  />
           }
           {/* Paginación */}
           <div className="flex items-center justify-center mt-4 space-x-2">

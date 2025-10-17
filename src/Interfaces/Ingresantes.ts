@@ -9,4 +9,5 @@ export interface Ingresante {
     cargo:string;
     dependencia:string;
     tipoEmpleado:string;
+    existeLegajo:boolean;
 }

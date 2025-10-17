@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { login } from '../api/authApi';
+import { login as apiLogin } from '../api/authApi';
+import { useAuth } from '../context/AuthContext';
 
-interface LoginPageProps {
-  onLogin: (userData: any) => void;
-}
-
-const  LoginPage: React.FC<LoginPageProps> =  ({ onLogin }) => {
+const LoginPage: React.FC = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     user: '',
     password: ''
@@ -18,13 +16,12 @@ const  LoginPage: React.FC<LoginPageProps> =  ({ onLogin }) => {
     setIsLoading(true);
     setError('');
 
-    // Simulación de autenticación
     setTimeout(async() => {
       if (formData.user && formData.password) {
-        const obj = await login(formData.user, formData.password);
+        const obj = await apiLogin(formData.user, formData.password);
         if (obj.isLogin) {
-          onLogin({ user: formData.user,role: 'ADMIN' });
-        }else{
+          login({ user: formData.user, role: 'ADMIN' });
+        } else {
           setError(obj.mensaje);
         }
       } else {

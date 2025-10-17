@@ -11,4 +11,5 @@ export interface Documento {
     subTipoVerificacionId: string | null;
     fechaPresentacion: string;
     fechaFiscalizacion: string;
+    isfiscalizado: boolean;
 }

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdArticle, MdCircleNotifications, MdFactCheck } from "react-icons/md";
 import Envio from '../Modal/Envio';
 import Notificacion from '../Modal/Notificacion';
 import Respuesta from '../Modal/Respuesta';
 import { searchForEmpleado, searchForNumeroLegajo, searchForNumeroDocumento, searchFiscalizadorForEmpleado } from '../../api/procesoFiscalizadoApi';
 import { ProcesoFiscalizado } from '../../Interfaces/ProcesoFiscalizado';
+import { ProcesoFiscalizadoHistorico } from '../../Interfaces/ProcesoFiscalizadoHistorico';
 import {Ingresante} from '../../Interfaces/Ingresantes';
+import { compareDateToDate } from '../Help/helper';
 interface BandejaDocumentosProps {
   selectedMenuItem: string;
 }
@@ -41,8 +43,8 @@ const BandejaDocumentos: React.FC<BandejaDocumentosProps> = ({ selectedMenuItem 
   const [isEmpleado, setIsEmpleado] = useState<boolean>(false);
   const [isNumeroLegajo, setIsNumeroLegajo] = useState<boolean>(true);
   const [isNumeroDocumento, setIsNumeroDocumento] = useState<boolean>(true);
-  const [totalPages,setTotalPages] = useState(1)
-  const [page,setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [page, setPage] = useState(1)
   const [pageSize] = useState(10);
 
 
@@ -59,67 +61,105 @@ const BandejaDocumentos: React.FC<BandejaDocumentosProps> = ({ selectedMenuItem 
   const [isEnvioModal, setIsEnvioModal] = useState(false);
   const [isNotificacionModal, setIsNotificacionModal] = useState(false);
   const [isRespuestaModal, setIsRespuestaModal] = useState(false);
-  const [selectedDocumento, setSelectedDocumento] = useState<ProcesoFiscalizado >(null);
+  const [selectedDocumento, setSelectedDocumento] = useState<ProcesoFiscalizado | null>(null);
+  const [selectEnvio, setSelectEnvio] = useState<ProcesoFiscalizadoHistorico | ProcesoFiscalizado | null>(null);
+  const [selectNotificacion, setSelectNotificacion] = useState<ProcesoFiscalizadoHistorico | ProcesoFiscalizado | null>(null);
+  const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [isEditNotificacion, setIsEditNotificacion] = useState<boolean>(false);
 
+  const [documentos, setDocumentos] = useState<ProcesoFiscalizado[]>([]);
 
-  const [documentos,setDocumentos] = useState<ProcesoFiscalizado[]>([]);
-
-  const handleEnvioRowClick = (row : ProcesoFiscalizado)=> {
+  const handleEnvioRowClick = (row: ProcesoFiscalizado) => {
     setSelectedDocumento(row);
+    if(['ENVIADO', 'EN PROYECTO','PENDIENTE'].includes(row.estado))
+      setSelectEnvio(row);
+    else
+      setSelectEnvio(row?.historico.find(t => ['ENVIADO', 'EN PROYECTO'].includes(t?.estado)) || null);
     setIsEnvioModal(true);
   }
-  const handleNotificacionRowClick = (row : ProcesoFiscalizado)=> {
+  const handleNotificacionRowClick = (row: ProcesoFiscalizado) => {
     setSelectedDocumento(row);
+    console.log(row);
+    if(['NOTIFICADO'].includes(row.estado))
+      if (row.fechaFin != '' && row.fechaFin != null) {
+        setIsEditNotificacion(compareDateToDate(row.fechaFin));
+      }
+    if (['OBSERVADO','NOTIFICADO'].includes(row.estado))
+      setSelectNotificacion(row || null);
+    else
+      setSelectNotificacion(row?.historico.find(t => ['NOTIFICADO', 'OBSERVADO'].includes(t?.estado)) || null);
     setIsNotificacionModal(true);
   }
-  const handleRespuestaRowClick = (row : ProcesoFiscalizado)=> {
+  const handleRespuestaRowClick = (row: ProcesoFiscalizado) => {
     setSelectedDocumento(row);
+    setIsEdit(row.estado == 'VINCULADO');
     setIsRespuestaModal(true);
   }
-  const selectedDatosEnvio = (estado: string, date:string) => {
+  const selectedDatosEnvio = (estado: string, date: string) => {
     console.log("Estado seleccionado: ", estado);
     console.log("Fecha seleccionada: ", date);
     const updatedDocumentos = [...documentos];
     updatedDocumentos.forEach((doc, index) => {
-        if (doc.id == selectedDocumento?.id) {
-            doc.fechaInicio = date;
-            doc.estado = estado;
-        }
+      if (doc.id == selectedDocumento?.id) {
+        doc.fechaInicio = date;
+        doc.estado = estado;
+      }
     });
     setDocumentos(updatedDocumentos);
   }
-      const handleClickLimpiar = ()=>{
-          setEmpleado('');
-          setNumeroLegajo('');
-          setNumeroDocumento('');
+  const handleClickLimpiar = () => {
+    setEmpleado('');
+    setNumeroLegajo('');
+    setNumeroDocumento('');
+  }
+  useEffect(() => {
+      const fetchDocumento = async () => {
+      try {
+          if(documentos.length != 0)
+              await handleClickConsultar();
+      } catch (error) {
+          console.error("Error cargando Documento:", error);
       }
-      const handleClickConsultar = async()=>{
-          let response: any;
-          if(idCheck == '1')
-              response = await searchForEmpleado(empleado)
-          if(idCheck =='2')
-              response = await searchForNumeroLegajo(numeroLegajo)
-          if(idCheck =='3')
-              response = await searchForNumeroDocumento(numeroDocumento)
-          
-          if(response.success ){
-            const empleado: Ingresante = response.data[0];
-            setEmpleadoNombre(empleado.entrevistado);  
-            setEmpleadoCargo(empleado.cargo);  
-            setEmpleadoDependencia(empleado.dependencia);  
-            setEmpleadoFechaIngreso(empleado.fechaIngreso);
-            const procesoFiscalizadoResponse: any = await searchFiscalizadorForEmpleado(empleado.id, page, pageSize);
-            if(procesoFiscalizadoResponse.success ){
-              setDocumentos(procesoFiscalizadoResponse.data);
-              setTotalPages(procesoFiscalizadoResponse.totalPages);
-              setPage(procesoFiscalizadoResponse.page);
-            }else {
-              alert(response.menssage);
-            }
-          }else {
-              alert(response.menssage);
-          }
+      };
+      fetchDocumento();
+  }, [page]);
+  const handleClickConsultar = async () => {
+    let response: any;
+    if (idCheck == '1')
+      response = await searchForEmpleado(empleado)
+    if (idCheck == '2')
+      response = await searchForNumeroLegajo(numeroLegajo)
+    if (idCheck == '3')
+      response = await searchForNumeroDocumento(numeroDocumento)
+
+    if (response.success) {
+      const empleado: Ingresante = response.data[0];
+      setEmpleadoNombre(empleado.entrevistado);
+      setEmpleadoCargo(empleado.cargo);
+      setEmpleadoDependencia(empleado.dependencia);
+      setEmpleadoFechaIngreso(empleado.fechaIngreso);
+      const procesoFiscalizadoResponse: any = await searchFiscalizadorForEmpleado(empleado.id, page, pageSize);
+      if (procesoFiscalizadoResponse.success) {
+        setDocumentos(procesoFiscalizadoResponse.data);
+        setTotalPages(procesoFiscalizadoResponse.totalPages);
+        setPage(procesoFiscalizadoResponse.page);
+      } else {
+        alert(response.menssage);
       }
+    } else {
+      alert(response.menssage);
+    }
+  }
+  const onCloneNotificacion = () => {
+    setIsEditNotificacion(false)
+    setIsNotificacionModal(false);
+    handleClickConsultar();
+  }
+    const onCloneRespuesta = () => {
+    setIsEditNotificacion(false)
+    setIsNotificacionModal(false);
+    handleClickConsultar();
+  }
   return (
     <main className="flex-1 p-6 bg-gray-50">
       <div className="bg-white rounded-lg shadow">
@@ -392,9 +432,9 @@ const BandejaDocumentos: React.FC<BandejaDocumentosProps> = ({ selectedMenuItem 
               </tbody>
             </table>
           </div>
-          <Envio isEnvioModal={isEnvioModal} onClose={() => setIsEnvioModal(false)} row={selectedDocumento} selectedDatos={selectedDatosEnvio} />      
-          <Notificacion isNotificacionModal={isNotificacionModal} onClose={() => setIsNotificacionModal(false)} row={selectedDocumento} />      
-          <Respuesta isRespuestaModal={isRespuestaModal} onClose={() => setIsRespuestaModal(false)} row={selectedDocumento} />      
+          <Envio isEnvioModal={isEnvioModal} onClose={() => setIsEnvioModal(false)} row={selectedDocumento} historico={selectEnvio} selectedDatos={selectedDatosEnvio} />      
+          <Notificacion isNotificacionModal={isNotificacionModal} onClose={onCloneNotificacion} row={selectedDocumento} historico={selectNotificacion} isEdit={isEditNotificacion} />      
+          <Respuesta isRespuestaModal={isRespuestaModal} onClose={() => setIsRespuestaModal(false)} row={selectedDocumento} isEdit={isEdit} />      
           {/* Paginación */}
           <div className="flex items-center justify-center mt-4 space-x-2">
                                    <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"

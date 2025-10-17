@@ -1,4 +1,4 @@
-import { EntidadBasico } from './EntidadBasico';
+import { ProcesoFiscalizadoHistorico } from './ProcesoFiscalizadoHistorico';
 export interface ProcesoFiscalizado {
     id:string;
     fechaIngreso:string;
@@ -8,9 +8,11 @@ export interface ProcesoFiscalizado {
     emisor:string;
     sectorempresa:string;
     tipoverificacion:string;
+    subtipoverificacion:string;
     estado:string;
     fechaInicio:string;
     fechaFin:string;
+    fechaInforme:string;
     esnotificacion:string;
     esrespuesta:string;
     documentoRecibido:string;
@@ -18,5 +20,6 @@ export interface ProcesoFiscalizado {
     documentoCargado:string;
     observacion:string;
     observacionInterna:string;
-    medioNotificacion:string;
+    medionotificacion:string;
+    historico:ProcesoFiscalizadoHistorico[];
 }

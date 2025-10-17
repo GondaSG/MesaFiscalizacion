@@ -3,53 +3,114 @@ import { X, Calendar } from 'lucide-react';
 import Convocatoria from './convocatoria';
 import TipoFiscalizacion from './TipoFiscalizacion';
 import {TipoVerificacion} from '../../Interfaces/TipoVerificacion';
+import { useAuth } from '../../context/AuthContext';
+import { searchDocumentoForEmpleado,saveDocumentoFiscalizar } from '../../api/legajosApi';
+import  ConfirmacionModal  from './ConfirmacionModal';
+import Documento from '../../Interfaces/Documento';
 interface DocumentosModalProps {
-    data: DocumentoProps[];
     item: any;
     onClose: () => void;
     selectedRows: string[];
     onSelectRow: (id: string) => void;
-    selectedTipoFiscalizacion: (value: TipoVerificacion) => void;
 }
-interface DocumentoProps {
-    id: string ;
-    requisitoFiscalizado: string;
-    tipoDocumentofoleo: string;
-    descripcionDocumento: string;
-    emisor: string;
-    sectorEmpresaEmisora: string;
-    tipoVerificacion: string | null;
-    tipoVerificacionId: string | null;
-    subTipoVerificacion: string | null;
-    subTipoVerificacionId: string | null;
-    fechaPresentacion: string;
-    fechaFiscalizacion: string;
-}
+
 interface DocumentosSave {
     id: string;
     tipoVerificacion: string;
     subTipoVerificacion: string;
 }
-const DocumentosModal: React.FC<DocumentosModalProps> = ({data,item, onClose, selectedRows ,onSelectRow,selectedTipoFiscalizacion}) => {
+const DocumentosModal: React.FC<DocumentosModalProps> = ({item, onClose}) => {
 
     const [modalReingresante, setModalReingresante] = useState('si');
     const [modalVerTodosDocumentos, setModalVerTodosDocumentos] = useState(true);
     const [isConvocatoriaOpen, setIsConvocatoriaOpen] = useState(false);
     const [isTipoFiscalizacionOpen, setIsTipoFiscalizacionOpen] = useState(false);
-    const [rowSelected, setRowSelected] = useState<DocumentoProps>();
-    const [documentos, setDocumentos] = useState<DocumentoProps[]>([]);
+    const [rowSelected, setRowSelected] = useState<Documento>();
+    const [documentos, setDocumentos] = useState<Documento[]>([]);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    const [isConfimacionModal, setIsConfimacionModal] = useState<boolean>(false);
+    const [mensajeConfirmacion, setMensajeConfirmacion] = useState('');
+    const [tituloConfirmacion, setTituloConfirmacion] = useState('');
+    const { user } = useAuth();
 
-
-    const handleRowClick = (row: DocumentoProps) => {
+    const handleRowClick = (row: Documento) => {
         setIsTipoFiscalizacionOpen(true);
         setRowSelected(row)
     }
+    useEffect(() => {
+        const fetchDocumento = async (id: string) => {
+            try {
+                var resultado: any;
+                resultado = await searchDocumentoForEmpleado(id);
+                if (resultado.success)
+                    setDocumentos(resultado.data);
+                else {
+                    alert(resultado.menssage);
+                }
 
+            } catch (error) {
+                console.error("Error cargando Documentos:", error);
+            }
+        };
+        if (documentos.length == 0) 
+            fetchDocumento(item.id);
+    }, [documentos]);
+    const validateRow = (id:string)=>{
+        const doc  = documentos.find(d => d.id === id);
+        if(doc?.tipoVerificacionId === null || doc?.tipoVerificacionId === undefined) {
+            alert('Debe seleccionar un Tipo de Verificación para el documento seleccionado');
+            return true;
+        }
+        if(doc?.subTipoVerificacionId === null || doc?.subTipoVerificacionId === undefined) {
+            alert('Debe seleccionar un sub Tipo de Verificación para el documento seleccionado');
+            return true;
+        }
+        return false;
+    }
+    const handleSelectRow = (id:string) => {
+        if(validateRow(id)) return;
+        setSelectedRows((prev) =>
+        prev.includes(id)
+        ? prev.filter((rowId) => rowId !== id)
+        : [...prev, id]
+        );
+    }
+    const selectedTipoFiscalizacion = (tipoVer: TipoVerificacion) => {
+        console.log(tipoVer)
+        const updatedDocumentos = [...documentos];
+        updatedDocumentos.forEach((doc) => {
+            if (doc.id == tipoVer?.id) {
+                doc.tipoVerificacion = tipoVer.tipoVerificacion;
+                doc.tipoVerificacionId = tipoVer.tipoVerificacionId;
+                doc.subTipoVerificacion = tipoVer.subTipoVerificacion;
+                doc.subTipoVerificacionId = tipoVer.subTipoVerificacionId;
+            }
+        });
+        setDocumentos(updatedDocumentos);
+    }
 
-
-    const handleGuardar = ()=>{
-        console.log(selectedRows)
-        console.log(data)
+    const onCloseModal = () => {
+        setIsConfimacionModal(false);
+        onClose();
+    }
+    const handleGuardar = async()=>{
+        const dataSelect = documentos
+            .filter(doc => selectedRows.includes(doc.id))
+            .map(doc => {
+                return {
+                    id: doc.id, 
+                    tipoVerificacion: doc.tipoVerificacion || '', 
+                    tipoVerificacionId: doc.tipoVerificacionId || '',
+                    subTipoVerificacion: doc.subTipoVerificacion || '',
+                    subTipoVerificacionId: doc.tipoVerificacionId || '',
+                    usuario: user.user // Aquí debes reemplazar con el usuario actual
+                }
+            });
+        console.log(dataSelect);
+        const response: any = await saveDocumentoFiscalizar(dataSelect);
+        setTituloConfirmacion('Operación realizada con éxito');
+        setMensajeConfirmacion(response?.menssage);
+        setIsConfimacionModal(true);
     }
 
     return (
@@ -171,7 +232,7 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({data,item, onClose, se
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.map((doc, index) => (
+                                {documentos.map((doc, index) => (
                                     <tr key={index} className="hover:bg-gray-50">
                                         <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.requisitoFiscalizado}</td>
                                         <td className="border border-gray-200 px-2 py-2 text-xs text-black">{doc.tipoDocumentofoleo}</td>
@@ -192,8 +253,9 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({data,item, onClose, se
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">
                                             <input
                                                 type="checkbox"
-                                                checked={selectedRows.includes(item.id)}
-                                                onChange={() => onSelectRow(item.id)}
+                                                checked={selectedRows.includes(doc.id)}
+                                                onChange={() => handleSelectRow(doc.id)}
+                                                disabled={doc.isfiscalizado}
                                             />
                                         </td>
                                     </tr>
@@ -205,6 +267,9 @@ const DocumentosModal: React.FC<DocumentosModalProps> = ({data,item, onClose, se
                         <TipoFiscalizacion rowSelected={rowSelected} onClose={() => setIsTipoFiscalizacionOpen(false)} selectedTipoFiscalizacion={selectedTipoFiscalizacion} />
                     }
                     <Convocatoria isConvocatoriaOpen={isConvocatoriaOpen} onClose={() => setIsConvocatoriaOpen(false)} pdfUrl={"https://drive.google.com/file/d/1hzklZXo7LM-EpsJBqi7wdbSWjVvXAnP3/preview"} />
+                    { isConfimacionModal &&
+                        <ConfirmacionModal title={tituloConfirmacion} text={mensajeConfirmacion} onClose={onCloseModal} />
+                    }
                     {/* Botones del Modal */}
                     <div className="flex justify-end space-x-3 mt-6">
                         <button

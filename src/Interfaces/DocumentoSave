@@ -1,0 +1,8 @@
+export interface DocumentoSave {
+    id: string ;
+    tipoVerificacion: string | null;
+    tipoVerificacionId: string | null;
+    subTipoVerificacion: string | null;
+    subTipoVerificacionId: string | null;
+    user: string;
+}

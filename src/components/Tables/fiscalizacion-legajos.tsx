@@ -1,5 +1,9 @@
 import { BandejaDocumentosProps } from '../../Interfaces/BandejaDocumentosProps';
 import { useState } from 'react';
+import { SearchConsultaLegajos } from '../../api/consultasApi';
+import { FiscalizacionLegajo } from '../../Interfaces/FiscalizacionLegajo';
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 const FiscalizacionLegajos: React.FC<BandejaDocumentosProps> = ({selectedMenuItem}) => {
     const fechaActual = new Date();
     const año = fechaActual.getFullYear();
@@ -14,9 +18,87 @@ const FiscalizacionLegajos: React.FC<BandejaDocumentosProps> = ({selectedMenuIte
     const [numeroLegajo,setNumeroLegajo] = useState('')
     const [tipoDocumento,setTipoDocumento] = useState('')
     const [numeroDocumento,setNumeroDocumento] = useState('')
+    const [tipoEmpleado,setTipoEmpleado] = useState('')
       
+    const [totalPages, setTotalPages] = useState(1)
+    const [page, setPage] = useState(1)
+    const [pageSize] = useState(10);
+
+    const [data,setData] = useState<FiscalizacionLegajo[]>([]);
+    const obtenerfiltros = () => {
+        switch (optionChecked) {
+            case "1":
+            return {
+                opcion : optionChecked,
+                parametro1: fechaInicio,
+                parametro2: fechaFin
+            };
+            case "2":
+            return {
+                opcion : optionChecked,
+                parametro1: empleado,
+                parametro2: ''              
+            };
+            case "3":
+            return {
+                opcion : optionChecked,
+                parametro1: tipoDocumento,
+                parametro2: numeroDocumento   
+            };
+            case "4":
+            return {
+                opcion : optionChecked,
+                parametro1: numeroLegajo,
+                parametro2: ''  
+            };
+            case "5":
+            return {
+                opcion : optionChecked,
+                parametro1: '',
+                parametro2: ''
+            };
+            case "6":
+            return {
+                opcion : optionChecked,
+                parametro1: tipoEmpleado,
+                parametro2: '' 
+            };
+            case "7":
+            return {
+                opcion : optionChecked,
+                parametro1: fechaInicio,
+                parametro2: fechaFin
+            };
+            default:
+            return{};
+        }
+    }
+    const obeterfiscalizadores = async()=>{
+        let request: any = obtenerfiltros();
+        const response = await SearchConsultaLegajos(request,page,pageSize);
+        setData(response.data);
+    }
+        const exportar = () => {
+            const headers = [["N° Legajo",
+            "Empleado",
+            "Fecha de Ingreso",
+            "Régimen Laboral",
+            "Tipo Empleado",
+            "Cargo",
+            "Dependencia",
+            "Estado Fiscalización",
+            "Responsable"]];
+            const worksheet = XLSX.utils.aoa_to_sheet(headers);
     
+            XLSX.utils.sheet_add_json(worksheet, data, { origin: "A2", skipHeader: true });
     
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Datos");
+    
+            const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+            const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+            saveAs(blob, `legajos_${fechaFormateada}.xlsx`);
+        }
     
     
     return (
@@ -206,7 +288,7 @@ const FiscalizacionLegajos: React.FC<BandejaDocumentosProps> = ({selectedMenuIte
                                 Limpiar
                             </button>
                             <button
-                                //onClick={() => handleClickConsultar()}
+                                onClick={() => obeterfiscalizadores()}
                                 className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
                                 Consultar
                             </button>
@@ -216,14 +298,15 @@ const FiscalizacionLegajos: React.FC<BandejaDocumentosProps> = ({selectedMenuIte
 
                 {/* Listado de Ingresantes */}
                 <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-black">Listado de Ingresantes</h3>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                            //onClick={() => handleAgregarLegajoClick()}
+                    <div className="flex items-center justify-start mb-4">
+                        <button className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                            onClick={() => exportar()}
                         >
-                            
-                            <span>Agregar Legajo</span>
+                            <span>Exportar excel</span>
                         </button>
+                    </div>
+                    <div className="flex items-center justify-start mb-4">
+                        <h3 className="text-sm font-semibold text-black">Listado de Ingresantes</h3>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -242,24 +325,44 @@ const FiscalizacionLegajos: React.FC<BandejaDocumentosProps> = ({selectedMenuIte
                                 </tr>
                             </thead>
                             <tbody>
+                                {data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={10} className="border border-gray-200 px-3 py-8 text-center text-sm text-gray-500">
+                                        No hay ingresantes para mostrar para mostrar
+                                        </td>
+                                    </tr>
+                                ) : (
+                                data.map((item, index) => (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.numerolegajo}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.entrevistado}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fechaIngreso}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.registroLaboral}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.tipoempleado}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.cargo}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.dependencia}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.estadoFiscalizacion}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.username}</td>
+                                    </tr>
+                                )))}
                             </tbody>
                         </table>
                     </div>
 
                     {/* Paginación */}
                     <div className="flex items-center justify-center mt-4 space-x-2">
-                        <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                            //disabled={page === 1}
-                            //onClick={() => setPage(page - 1)}
+                                   <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                            disabled={page === 1}
+                            onClick={() => setPage(page -1)}        
                         >
                             Anterior
                         </button>
-                        <span className="px-3 py-1 text-sm text-black">{1}</span>
+                        <span className="px-3 py-1 text-sm text-black">{page}</span>
                         <span className="px-3 py-1 text-sm text-black">de</span>
-                        <span className="px-3 py-1 text-sm text-black">{1}</span>
+                        <span className="px-3 py-1 text-sm text-black">{totalPages}</span>
                         <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                            //disabled={page === totalPages}
-                            //onClick={() => setPage(page + 1)}
+                            disabled={page === totalPages}
+                            onClick={() => setPage(page +1)}  
                         >
                             Siguiente
                         </button>

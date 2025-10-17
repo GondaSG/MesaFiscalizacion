@@ -1,5 +1,9 @@
 import { BandejaDocumentosProps } from '../../Interfaces/BandejaDocumentosProps';
 import { useState } from 'react';
+import {SearchConsultaDocumentosObservados} from '../../api/consultasApi';
+import { DocumentosObservados } from '../../Interfaces/DocumentosObservados';
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 const DocumentoObservado: React.FC<BandejaDocumentosProps> = ({selectedMenuItem}) => {
     const fechaActual = new Date();
     const año = fechaActual.getFullYear();
@@ -15,10 +19,72 @@ const DocumentoObservado: React.FC<BandejaDocumentosProps> = ({selectedMenuItem}
     const [tipoDocumento,setTipoDocumento] = useState('')
     const [numeroDocumento,setNumeroDocumento] = useState('')
       
-    
-    
-    
-    
+    const [totalPages, setTotalPages] = useState(1)
+    const [page, setPage] = useState(1)
+    const [pageSize] = useState(10);
+
+    const [data, setData] = useState<DocumentosObservados[]>([]);
+    const obtenerfiltros = () => {
+        switch (optionChecked) {
+            case "1":
+                return {
+                    opcion: optionChecked,
+                    parametro1: fechaInicio,
+                    parametro2: fechaFin
+                };
+            case "2":
+                return {
+                    opcion: optionChecked,
+                    parametro1: empleado,
+                    parametro2: ''
+                };
+            case "3":
+                return {
+                    opcion: optionChecked,
+                    parametro1: numeroLegajo,
+                    parametro2: ''
+                };
+            case "4":
+                return {
+                    opcion: optionChecked,
+                    parametro1: tipoDocumento,
+                    parametro2: numeroDocumento
+                };
+            default:
+                return {};
+        }
+    }
+    const handleConsulta = async () => {
+        let request: any = obtenerfiltros();
+        const response = await SearchConsultaDocumentosObservados(request, page, pageSize);
+        setData(response.data);
+    }
+    const exportar = () => {
+        const headers = [["Doc Identidad",
+        "Empleado",
+        "N° Legajo",
+        "N° Expediente",
+        "N° Documento Enviado",
+        "Sector Empresa Emisora",
+        "Emisor",
+        "Requisito Fiscalizado",
+        "Tipo Documento",
+        "Descripción Documento",
+        "Fecha Observación",
+        "Motivo Observación"]];
+        const worksheet = XLSX.utils.aoa_to_sheet(headers);
+
+        XLSX.utils.sheet_add_json(worksheet, data, { origin: "A2", skipHeader: true });
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Datos");
+
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+        saveAs(blob, `observados_${fechaFormateada}.xlsx`);
+    }
+
+
     return (
         <main className="flex-1 p-6 bg-gray-50">
             <div className="bg-white rounded-lg shadow">
@@ -159,7 +225,7 @@ const DocumentoObservado: React.FC<BandejaDocumentosProps> = ({selectedMenuItem}
                                 Limpiar
                             </button>
                             <button
-                                //onClick={() => handleClickConsultar()}
+                                onClick={() => handleConsulta()}
                                 className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
                                 Consultar
                             </button>
@@ -169,14 +235,15 @@ const DocumentoObservado: React.FC<BandejaDocumentosProps> = ({selectedMenuItem}
 
                 {/* Listado de Ingresantes */}
                 <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-black">Listado de Ingresantes</h3>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                            //onClick={() => handleAgregarLegajoClick()}
+                    <div className="flex items-center justify-start mb-4">
+                        <button className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                            onClick={() => exportar()}
                         >
-                            
-                            <span>Agregar Legajo</span>
+                            <span>Exportar excel</span>
                         </button>
+                    </div>
+                    <div className="flex items-center justify-start mb-4">
+                        <h3 className="text-sm font-semibold text-black">Listado de Ingresantes</h3>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -198,24 +265,47 @@ const DocumentoObservado: React.FC<BandejaDocumentosProps> = ({selectedMenuItem}
                                 </tr>
                             </thead>
                             <tbody>
+                                {data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={10} className="border border-gray-200 px-3 py-8 text-center text-sm text-gray-500">
+                                        No hay ingresantes para mostrar para mostrar
+                                        </td>
+                                    </tr>
+                                ) : (
+                                data.map((item, index) => (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.tipodocumento}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.documento}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.entrevistado}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.numerolegajo}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.numeroexperiente}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.documentoenviado}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.sectorempresaemisora}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.requisitoFiscalizado}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.tipodocumentofoleo}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.descripciondocumento}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fechaFin}</td>
+                                        <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.observacion}</td>
+                                    </tr>
+                                )))}
                             </tbody>
                         </table>
                     </div>
 
                     {/* Paginación */}
                     <div className="flex items-center justify-center mt-4 space-x-2">
-                        <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                            //disabled={page === 1}
-                            //onClick={() => setPage(page - 1)}
+                                   <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                            disabled={page === 1}
+                            onClick={() => setPage(page -1)}        
                         >
                             Anterior
                         </button>
-                        <span className="px-3 py-1 text-sm text-black">{1}</span>
+                        <span className="px-3 py-1 text-sm text-black">{page}</span>
                         <span className="px-3 py-1 text-sm text-black">de</span>
-                        <span className="px-3 py-1 text-sm text-black">{1}</span>
+                        <span className="px-3 py-1 text-sm text-black">{totalPages}</span>
                         <button className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                            //disabled={page === totalPages}
-                            //onClick={() => setPage(page + 1)}
+                            disabled={page === totalPages}
+                            onClick={() => setPage(page +1)}  
                         >
                             Siguiente
                         </button>

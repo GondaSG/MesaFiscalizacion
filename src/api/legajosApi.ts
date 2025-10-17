@@ -2,6 +2,7 @@ import apiClient from "./apiClient";
 import { Response} from "../Interfaces/Response";   
 import { Legajo } from "../Interfaces/Legajo";
 import { Documento } from "../Interfaces/Documento";
+import { DocumentoSave } from "../Interfaces/DocumentoSave";
  
 
 export const searchForDates = async (fechaInicio: string, fechaFin: string,page:number,pageSize:number) => {
@@ -22,5 +23,9 @@ export const searchForNumeroLegajo = async (numeroLegajo: string,page:number,pag
 };
 export const searchDocumentoForEmpleado = async (empleado: string) => {
     const response = await apiClient.post<Response<Documento>>(`/legajos/searchDocumentosForEmpleado`, { empleado });
+    return response.data;
+};
+export const saveDocumentoFiscalizar = async (documentos: DocumentoSave[]) => {
+    const response = await apiClient.post<Response<Documento>>(`/legajos/saveDocumentoFiscalizar`, documentos );
     return response.data;
 };

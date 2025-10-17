@@ -1,14 +1,16 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { ProcesoFiscalizado } from '../../Interfaces/ProcesoFiscalizado';
+import { ProcesoFiscalizadoHistorico } from '../../Interfaces/ProcesoFiscalizadoHistorico';
 interface EnvioProps {
     isEnvioModal: boolean;
     onClose: () => void;
     row: ProcesoFiscalizado;
+    historico: ProcesoFiscalizadoHistorico
     selectedDatos: (estado: string, date:string) => void;
     // You can add more props as needed
 }
-const Envio: React.FC<EnvioProps>  = ({isEnvioModal, onClose, row ,selectedDatos}) =>{
+const Envio: React.FC<EnvioProps>  = ({isEnvioModal, onClose, row, historico,selectedDatos},) =>{
 const [estado, setEstado] = React.useState<string>('');
 const [fechaEnvio, setFechaEnvio] = React.useState<string>('');
 
@@ -108,7 +110,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.subtipoverificacion}
+                                value={row.tipodocumentofoleo}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -123,7 +125,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.documentoEnviado}
+                                value={historico?.documentoenviado}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -138,7 +140,7 @@ return (
                         <div className="flex flex-col">
                             <input
                                 type="text"
-                                value={row.estado}
+                                value={historico?.estado}
                                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 readOnly={true}
                                 disabled={true}
@@ -152,8 +154,8 @@ return (
                         <div className="flex flex-col">
                             {row.tipoverificacion === 'SGD' && 
                                 <input
-                                    type="date"
-                                    value={row.fechaEstadoActual}
+                                    type="text"
+                                    value={historico?.fechaFin}
                                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                     readOnly={true}
                                     disabled={true}
@@ -162,7 +164,7 @@ return (
                             {row.tipoverificacion === 'WEB' && 
                                 <input
                                     type="date"
-                                    value={fechaEnvio || row.fechaEstadoActual}
+                                    value={fechaEnvio || historico?.fechaFin}
                                     onChange={(e) => setFechaEnvio(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-black focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                                 />

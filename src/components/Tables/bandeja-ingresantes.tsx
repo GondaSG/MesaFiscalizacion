@@ -113,7 +113,7 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
         if (selectedRows.length === ingresantes.length) {
             setSelectedRows([]); // deseleccionar todos
         } else {
-            setSelectedRows(ingresantes.map((r) => r.id)); // seleccionar todos
+            setSelectedRows(ingresantes.filter((r)=> !r.existeLegajo).map((r) => r.id)); // seleccionar todos
         }
     };
     const handleClickLimpiar = ()=>{
@@ -318,6 +318,7 @@ const BandejaIngresantes: React.FC<BandejaIngresantesProps> = ({ selectedMenuIte
                                                 type="checkbox"
                                                 checked={selectedRows.includes(item.id)}
                                                 onChange={() => handleSelectRow(item.id)}
+                                                disabled={item.existeLegajo}
                                             />
                                         </td>
                                         <td className="border border-gray-200 px-3 py-2 text-xs text-black">{item.fechaIngreso}</td>

@@ -1,34 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import './styles/custom.css';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const queryClient = new QueryClient();
-  const handleLogin = (userData: any) => {
-    setIsAuthenticated(true);
-    setUser(userData);
-  };
+const queryClient = new QueryClient();
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-  };
+function AppContent() {
+  const { user } = useAuth();
 
   return (
-      <QueryClientProvider client={queryClient}>
-        <div className="App">
-        {!isAuthenticated ? (
-          <LoginPage onLogin={handleLogin} />
-        ) : (
-          <Dashboard user={user} onLogout={handleLogout} />
-        )}
-        </div>
-      </QueryClientProvider>
+    <div className="App">
+      {user ? <Dashboard /> : <LoginPage />}
+    </div>
+  );
+}
 
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
